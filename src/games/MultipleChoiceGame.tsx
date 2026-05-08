@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Volume2 } from "lucide-react";
 import { Confetti, FinishScreen, GameHeader, GameLayout } from "@/components/GameShell";
-import { playCorrect, playWrong } from "@/lib/gameAudio";
+import { playAnimalSound, playCorrect, playWrong, speak, stopSpeak } from "@/lib/gameAudio";
 
 export type MCOption = {
   key: string;
@@ -9,11 +10,19 @@ export type MCOption = {
   bg?: string;
 };
 
+export type MCAudio = {
+  /** Spoken text via Web Speech API. */
+  speak?: string;
+  /** Animal name to look up an mp3 in /sounds/animals/. */
+  animal?: string;
+};
+
 export type MCRound = {
   prompt: ReactNode;
   visual?: ReactNode;
   options: MCOption[];
   correctKey: string;
+  audio?: MCAudio;
 };
 
 export type MCGameProps = {
@@ -41,6 +50,23 @@ export function MultipleChoiceGame({
   const [feedback, setFeedback] = useState<"none" | "correct" | "wrong">("none");
   const [pickedKey, setPickedKey] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  const playRoundAudio = () => {
+    const a = data.audio;
+    if (!a) return;
+    if (a.animal && playAnimalSound(a.animal)) {
+      if (a.speak) setTimeout(() => speak(a.speak as string), 700);
+      return;
+    }
+    if (a.speak) speak(a.speak);
+  };
+
+  useEffect(() => {
+    if (done) return;
+    playRoundAudio();
+    return () => stopSpeak();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round, done]);
 
   const handlePick = (opt: MCOption) => {
     if (feedback !== "none") return;
@@ -92,9 +118,30 @@ export function MultipleChoiceGame({
           {data.prompt}
         </div>
         {data.visual && (
-          <div key={`visual-${round}`} className="animate-pop-in">
+          <div key={`visual-${round}`} className="animate-pop-in relative">
             {data.visual}
+            {data.audio && (
+              <button
+                type="button"
+                onClick={playRoundAudio}
+                className="absolute -bottom-2 -right-2 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-2xl text-sky-600 shadow-lg ring-2 ring-sky-200 active:scale-95"
+                aria-label="Putar suara"
+              >
+                <Volume2 className="h-6 w-6" />
+              </button>
+            )}
           </div>
+        )}
+        {!data.visual && data.audio && (
+          <button
+            type="button"
+            onClick={playRoundAudio}
+            className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-base font-bold text-sky-600 shadow ring-2 ring-sky-200 active:scale-95"
+            aria-label="Putar suara"
+          >
+            <Volume2 className="h-5 w-5" />
+            Putar suara
+          </button>
         )}
         <div className={`grid w-full max-w-md gap-4 ${cols}`}>
           {data.options.map((opt) => {

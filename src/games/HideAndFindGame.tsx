@@ -1,9 +1,24 @@
 import { useEffect, useState } from "react";
+import { Volume2 } from "lucide-react";
 import { Confetti, FinishScreen, GameHeader, GameLayout } from "@/components/GameShell";
-import { playCorrect, playWrong, playPop } from "@/lib/gameAudio";
+import {
+  playAnimalSound,
+  playCorrect,
+  playWrong,
+  playPop,
+  speak,
+  stopSpeak,
+} from "@/lib/gameAudio";
 import { pickN, pickRandom, shuffle } from "@/lib/gameUtils";
 
 export type HideItem = { emoji: string; name: string };
+
+export type HideGameAudio = {
+  /** If true, speak the target's name on each round. */
+  speak?: boolean;
+  /** If true, also play an animal mp3 if one exists for the target name. */
+  animal?: boolean;
+};
 
 export type HideRound = {
   target: HideItem;
@@ -18,6 +33,7 @@ export type HideGameProps = {
   optionCount?: number;
   boxEmoji: string;
   promptPrefix: string;
+  audio?: HideGameAudio;
   onBack: () => void;
 };
 
@@ -38,6 +54,7 @@ export function HideAndFindGame({
   optionCount = 4,
   boxEmoji,
   promptPrefix,
+  audio,
   onBack,
 }: HideGameProps) {
   const [round, setRound] = useState(0);
@@ -51,6 +68,23 @@ export function HideAndFindGame({
   useEffect(() => {
     setRevealed({});
   }, [round]);
+
+  const playRoundAudio = () => {
+    if (!audio) return;
+    const name = data.target.name;
+    if (audio.animal && playAnimalSound(name)) {
+      if (audio.speak) setTimeout(() => speak(name), 700);
+      return;
+    }
+    if (audio.speak) speak(name);
+  };
+
+  useEffect(() => {
+    if (done) return;
+    playRoundAudio();
+    return () => stopSpeak();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round, done]);
 
   const handlePick = (it: HideItem) => {
     if (feedback !== "none") return;
@@ -99,12 +133,25 @@ export function HideAndFindGame({
     <GameLayout bg={bg}>
       <GameHeader title={title} onBack={onBack} score={score} total={total} />
       <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
-        <div className="rounded-2xl bg-white/80 px-6 py-3 text-center text-2xl font-bold text-slate-700 shadow">
-          {promptPrefix}{" "}
-          <span className="font-extrabold">
-            {data.target.emoji} {data.target.name}
-          </span>
-          !
+        <div className="flex flex-col items-center gap-2">
+          <div className="rounded-2xl bg-white/80 px-6 py-3 text-center text-2xl font-bold text-slate-700 shadow">
+            {promptPrefix}{" "}
+            <span className="font-extrabold">
+              {data.target.emoji} {data.target.name}
+            </span>
+            !
+          </div>
+          {audio && (
+            <button
+              type="button"
+              onClick={playRoundAudio}
+              className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-base font-bold text-sky-600 shadow ring-2 ring-sky-200 active:scale-95"
+              aria-label="Putar suara"
+            >
+              <Volume2 className="h-5 w-5" />
+              Putar suara
+            </button>
+          )}
         </div>
         <div className="grid w-full max-w-md grid-cols-2 gap-4">
           {data.options.map((opt) => {

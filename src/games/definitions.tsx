@@ -31,6 +31,7 @@ export function SortirBuahSayur({ onBack }: { onBack: () => void }) {
         { key: "sayur", label: "SAYUR", emoji: "🥦", bg: "bg-green-500" },
       ],
       correctKey: item.type,
+      audio: { speak: item.name },
     };
   };
   return (
@@ -59,6 +60,7 @@ export function GameTraktor({ onBack }: { onBack: () => void }) {
         { key: "sayur", label: "Traktor Sayur", emoji: "🚜🥕", bg: "bg-green-500" },
       ],
       correctKey: item.type,
+      audio: { speak: item.name },
     };
   };
   return (
@@ -168,6 +170,7 @@ export function TebakHewan({ onBack }: { onBack: () => void }) {
       ),
       options: opts.map((a) => ({ key: a.name, emoji: a.emoji })),
       correctKey: t.name,
+      audio: { speak: t.name, animal: t.name },
     };
   };
   return (
@@ -205,6 +208,7 @@ export function PeternakanLiar({ onBack }: { onBack: () => void }) {
         { key: "liar", label: "HUTAN LIAR", emoji: "🌳", bg: "bg-green-700" },
       ],
       correctKey: a.habitat,
+      audio: { speak: a.name, animal: a.name },
     };
   };
   return (
@@ -236,6 +240,7 @@ export function MemberiMakanHewan({ onBack }: { onBack: () => void }) {
       ),
       options: opts,
       correctKey: a.foodEmoji,
+      audio: { speak: a.name, animal: a.name },
     };
   };
   return (
@@ -270,6 +275,7 @@ export function MenyortirBarang({ onBack }: { onBack: () => void }) {
         { key: "pakaian", label: "PAKAIAN", emoji: "👕", bg: "bg-blue-500" },
       ],
       correctKey: item.category,
+      audio: { speak: item.name },
     };
   };
   return (
@@ -299,6 +305,7 @@ export function PetualanganLaut({ onBack }: { onBack: () => void }) {
       ),
       options: opts.map((a) => ({ key: a.name, emoji: a.emoji })),
       correctKey: t.name,
+      audio: { speak: t.name, animal: t.name },
     };
   };
   return (
@@ -339,6 +346,7 @@ export function GameEjaan({ onBack }: { onBack: () => void }) {
       ),
       options: opts,
       correctKey: correctLetter,
+      audio: { speak: `${correctLetter}, ${item.name}` },
     };
   };
   return (
@@ -362,6 +370,7 @@ export function MenyembunyikanHewan({ onBack }: { onBack: () => void }) {
       pool={ANIMALS.map((a) => ({ emoji: a.emoji, name: a.name }))}
       boxEmoji="🌿"
       promptPrefix="Cari"
+      audio={{ speak: true, animal: true }}
       onBack={onBack}
     />
   );
@@ -376,6 +385,7 @@ export function KotakMainan({ onBack }: { onBack: () => void }) {
       pool={TOYS}
       boxEmoji="📦"
       promptPrefix="Buka kotak yang berisi"
+      audio={{ speak: true }}
       onBack={onBack}
     />
   );
