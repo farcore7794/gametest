@@ -22,68 +22,45 @@ export function playBeep(freq: number, duration = 0.15, type: OscillatorType = "
   }
 }
 
-// Small pool of preloaded "yay!" audio elements so rapid correct answers can
-// overlap without waiting for the previous play to finish. cloneNode() is
-// unreliable across browsers for media, so we instantiate real <Audio> nodes.
-const YEY_POOL_SIZE = 3;
-let yeyPool: HTMLAudioElement[] | null = null;
-let yeyIdx = 0;
-
-function ensureYeyPool(): HTMLAudioElement[] {
-  if (yeyPool) return yeyPool;
-  const url = `${import.meta.env.BASE_URL}sounds/fx/yey.mp3`;
-  const pool: HTMLAudioElement[] = [];
-  for (let i = 0; i < YEY_POOL_SIZE; i++) {
-    try {
-      const a = new Audio(url);
-      a.preload = "auto";
-      a.volume = 1.0;
-      // Force the browser to start fetching the file now so the first play
-      // isn't silent while it's loading.
-      a.load();
-      pool.push(a);
-    } catch {
-      // ignore — fall back to beeps below
-    }
+// Short kid "yay!" clip — preloaded once and replayed (cloned so rapid taps don't cut off).
+let yeyAudio: HTMLAudioElement | null = null;
+function ensureYeyAudio() {
+  if (yeyAudio) return yeyAudio;
+  try {
+    yeyAudio = new Audio(`${import.meta.env.BASE_URL}sounds/fx/yey.mp3`);
+    yeyAudio.preload = "auto";
+  } catch {
+    yeyAudio = null;
   }
-  yeyPool = pool;
-  return pool;
+  return yeyAudio;
 }
 
+const CHEER_PHRASES = ["Yey!", "Hebat!", "Bagus!", "Pintar!"];
+
 export const playCorrect = () => {
-  // Kid voice "yay!" sample — primary celebration sound.
-  let samplePlayed = false;
+  // Kid voice "yay!" sample
   try {
-    const pool = ensureYeyPool();
-    const a = pool[yeyIdx % pool.length];
-    yeyIdx = (yeyIdx + 1) % Math.max(pool.length, 1);
-    if (a) {
-      a.currentTime = 0;
-      const p = a.play();
-      if (p && typeof p.then === "function") {
-        samplePlayed = true;
-        p.catch(() => {
-          // autoplay blocked or other issue — fall back to beeps
-          samplePlayed = false;
-          playCorrectBeeps();
-        });
-      } else {
-        samplePlayed = true;
-      }
+    const src = ensureYeyAudio();
+    if (src) {
+      const a = src.cloneNode(true) as HTMLAudioElement;
+      a.volume = 0.95;
+      a.play().catch(() => {
+        // ignore autoplay restriction
+      });
     }
   } catch {
     // ignore
   }
-  if (!samplePlayed) {
-    playCorrectBeeps();
-  }
-};
-
-function playCorrectBeeps() {
+  // Cheerful chime as a fallback / overlay
   playBeep(660, 0.1);
   setTimeout(() => playBeep(880, 0.12), 110);
   setTimeout(() => playBeep(1175, 0.18), 220);
-}
+  // Indonesian cheer phrase via TTS (slight delay so it doesn't fight the sample)
+  setTimeout(() => {
+    const phrase = CHEER_PHRASES[Math.floor(Math.random() * CHEER_PHRASES.length)];
+    speak(phrase);
+  }, 450);
+};
 
 export const playWrong = () => playBeep(180, 0.25);
 
