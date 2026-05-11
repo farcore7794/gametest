@@ -22,9 +22,44 @@ export function playBeep(freq: number, duration = 0.15, type: OscillatorType = "
   }
 }
 
+// Short kid "yay!" clip — preloaded once and replayed (cloned so rapid taps don't cut off).
+let yeyAudio: HTMLAudioElement | null = null;
+function ensureYeyAudio() {
+  if (yeyAudio) return yeyAudio;
+  try {
+    yeyAudio = new Audio(`${import.meta.env.BASE_URL}sounds/fx/yey.mp3`);
+    yeyAudio.preload = "auto";
+  } catch {
+    yeyAudio = null;
+  }
+  return yeyAudio;
+}
+
+const CHEER_PHRASES = ["Yey!", "Hebat!", "Bagus!", "Pintar!"];
+
 export const playCorrect = () => {
-  playBeep(660, 0.12);
-  setTimeout(() => playBeep(880, 0.16), 120);
+  // Kid voice "yay!" sample
+  try {
+    const src = ensureYeyAudio();
+    if (src) {
+      const a = src.cloneNode(true) as HTMLAudioElement;
+      a.volume = 0.95;
+      a.play().catch(() => {
+        // ignore autoplay restriction
+      });
+    }
+  } catch {
+    // ignore
+  }
+  // Cheerful chime as a fallback / overlay
+  playBeep(660, 0.1);
+  setTimeout(() => playBeep(880, 0.12), 110);
+  setTimeout(() => playBeep(1175, 0.18), 220);
+  // Indonesian cheer phrase via TTS (slight delay so it doesn't fight the sample)
+  setTimeout(() => {
+    const phrase = CHEER_PHRASES[Math.floor(Math.random() * CHEER_PHRASES.length)];
+    speak(phrase);
+  }, 450);
 };
 
 export const playWrong = () => playBeep(180, 0.25);
